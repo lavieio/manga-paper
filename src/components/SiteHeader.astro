@@ -1,0 +1,97 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+
+interface Props {
+  current?: string;
+}
+
+const { current = "" } = Astro.props;
+
+const NAV_ITEMS = [
+  { href: "/posts/", label: "文章" },
+  { href: "/archive", label: "归档" },
+  { href: "/tags", label: "标签" },
+  { href: "/search", label: "搜索" },
+  { href: "/about", label: "关于" },
+] as const;
+---
+
+<header class="site-header">
+  <a class="brand" href="/">
+    <span class="seal" aria-hidden="true">M</span>
+    <span class="name">MangaPaper</span>
+  </a>
+  <nav class="site-nav" aria-label="主导航">
+    {
+      NAV_ITEMS.map((item) => (
+        <a
+          href={item.href}
+          class={current.startsWith(item.href.replace(/\/$/, "")) ? "on" : ""}
+          aria-current={current.startsWith(item.href.replace(/\/$/, "")) ? "page" : undefined}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+    <ThemeToggle />
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 34px 0 26px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: var(--red);
+    color: var(--card);
+    font-size: 17px;
+    font-weight: 700;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    transform: rotate(-3deg);
+  }
+  .brand .name {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+  @media (max-width: 640px) {
+    .site-nav {
+      gap: 16px;
+    }
+  }
+  .site-nav a {
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 3px 1px;
+    border-bottom: 3px solid transparent;
+  }
+  .site-nav a:hover {
+    color: var(--ink);
+    border-bottom-color: var(--yellow);
+  }
+  .site-nav a.on {
+    color: var(--ink);
+    border-bottom-color: var(--red);
+  }
+</style>

@@ -1,0 +1,82 @@
+<button class="theme-toggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">
+  <!-- 暗色模式下显示「太阳」（点击切回浅色） -->
+  <svg class="icon icon-sun" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"
+       fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square">
+    <circle cx="12" cy="12" r="4.6" fill="currentColor" stroke="none" />
+    <path d="M12 2v2.8M12 19.2V22M2 12h2.8M19.2 12H22M4.9 4.9l2 2M17.1 17.1l2 2M19.1 4.9l-2 2M6.9 17.1l-2 2" />
+  </svg>
+  <!-- 浅色模式下显示「月亮」（点击切到暗色） -->
+  <svg class="icon icon-moon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"
+       fill="currentColor">
+    <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6a.6.6 0 0 0-.8-.8 9.6 9.6 0 1 0 12.2 12.2.6.6 0 0 0-.8-.8Z" />
+  </svg>
+</button>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>(".theme-toggle");
+  const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // 类型安全地探测 View Transitions API（避免 any）
+  type DocWithVT = Document & {
+    startViewTransition?: (callback: () => void) => void;
+  };
+
+  btn?.addEventListener("click", () => {
+    const root = document.documentElement;
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    const apply = () => {
+      root.dataset.theme = next;
+      localStorage.setItem("theme", next);
+    };
+
+    const doc = document as DocWithVT;
+    if (REDUCED || !doc.startViewTransition) {
+      apply();
+      return;
+    }
+    // 过场动画圆心 = 按钮中心，写入 CSS 变量供 clip-path 使用
+    const rect = btn.getBoundingClientRect();
+    root.style.setProperty("--vt-x", `${rect.left + rect.width / 2}px`);
+    root.style.setProperty("--vt-y", `${rect.top + rect.height / 2}px`);
+    doc.startViewTransition(apply);
+  });
+</script>
+
+<style>
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 3px solid var(--ink);
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  .theme-toggle:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow);
+  }
+  .theme-toggle:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  /* 图标显隐：显式钉在 html 上（:not 写法会被 body 等祖先误命中） */
+  .icon {
+    display: block;
+  }
+  .icon-sun {
+    display: none;
+  }
+  :global(html[data-theme="dark"]) .icon-sun {
+    display: block;
+  }
+  :global(html[data-theme="dark"]) .icon-moon {
+    display: none;
+  }
+</style>

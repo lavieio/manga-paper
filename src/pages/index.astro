@@ -1,0 +1,39 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../config";
+---
+
+<Base>
+  <section class="hero">
+    <p class="sticker">{site.tagline}</p>
+    <h1>{site.name}</h1>
+    <p class="sub">漫画稿纸风格的开源博客模板 · 脚手架就绪</p>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding: 64px 0 24px;
+  }
+  .sticker {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    background: var(--blue);
+    color: var(--ink);
+    transform: rotate(-1deg);
+  }
+  h1 {
+    margin-top: 18px;
+    font-size: 40px;
+    letter-spacing: 0.04em;
+  }
+  .sub {
+    margin-top: 10px;
+    color: var(--ink-soft);
+  }
+</style>

@@ -1,0 +1,24 @@
+---
+import { site } from "../config";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <span>© {year} {site.author}</span>
+  <span>Built with Maple Mono NF CN</span>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 72px;
+    padding: 22px 0 30px;
+    border-top: 2px dashed var(--ink-soft);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+</style>

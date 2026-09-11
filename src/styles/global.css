@@ -19,9 +19,7 @@
   /* 硬阴影（零高斯模糊） */
   --shadow: 4px 4px 0 var(--ink);
   --shadow-lg: 7px 7px 0 var(--ink);
-  /* 字体：Ticket 02 将在此引入 CDN 分片；当前为系统 fallback */
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono",
-    Consolas, monospace;
+  /* --font-mono 定义于 fonts.css（CDN 分片 + fallback 度量对齐） */
 }
 
 [data-theme="dark"] {

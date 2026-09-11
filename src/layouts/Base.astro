@@ -1,4 +1,5 @@
 ---
+import "../styles/fonts.css";
 import "../styles/global.css";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -12,6 +13,19 @@ interface Props {
 const { title, description = site.tagline } = Astro.props;
 const pageTitle = title ? `${title} · ${site.name}` : site.name;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+
+// 字体 CDN：8 字重的 ZeoSeven Fonts API（并行加载）
+const FONT_CDN = "https://fontsapi.zeoseven.com/442";
+const FONT_WEIGHTS = [
+  "main",
+  "italic",
+  "medium",
+  "medium-italic",
+  "semi-bold",
+  "semi-bold-italic",
+  "bold",
+  "bold-italic",
+] as const;
 ---
 
 <!doctype html>
@@ -23,6 +37,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {
+      FONT_WEIGHTS.map((w) => (
+        <link rel="preload" as="style" href={`${FONT_CDN}/${w}/result.css`} />
+      ))
+    }
+    {
+      FONT_WEIGHTS.map((w) => (
+        <link rel="stylesheet" href={`${FONT_CDN}/${w}/result.css`} />
+      ))
+    }
     <script is:inline>
       // 首帧前决定主题，避免 FOUC（plan §4.3）
       (function () {

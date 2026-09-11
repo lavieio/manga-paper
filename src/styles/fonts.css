@@ -1,0 +1,21 @@
+/* Maple Mono NF CN — ZeoSeven Fonts CDN（见 Base.astro 的并行 <link>）
+   cn-font-split 按 unicode-range 分包，按需加载；OFL-1.1。
+
+/* Fallback 度量对齐（实测值，来源见下注释）——
+   MapleMono: upm 1000 / asc 1020 / desc -300 / gap 0 / avgWidth 600（0.6em）
+   Consolas : upm 2048 / avgWidth 1126（0.55em）
+   size-adjust 109.1% 令 Consolas 单字推进宽度对齐 MapleMono 的 0.6em，
+   swap 逐块替换时行距与排版不抖动。 */
+@font-face {
+  font-family: "Maple Mono NF CN Fallback";
+  src: local("Consolas");
+  size-adjust: 109.1%;
+  ascent-override: 93.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --font-mono: "Maple Mono NF CN", "Maple Mono NF CN Fallback",
+    ui-monospace, "Cascadia Code", monospace;
+}

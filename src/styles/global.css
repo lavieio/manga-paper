@@ -1,0 +1,118 @@
+/* MangaPaper · 漫画稿纸 —— 设计 tokens + 基础排版
+   浅色值与 demos/comic/base.css 定稿一致；暗色只改变量值（plan §4.2）。 */
+
+:root {
+  /* 底 */
+  --paper: #f7f2e7;
+  --dot: rgba(41, 38, 31, 0.1);
+  /* 墨水 */
+  --ink: #1c1913;
+  --ink-soft: #6d6355;
+  --card: #fffdf6;
+  /* 签名色（朱砂，严格限量：logoseal / FEATURED / TOC 指示 / 链接下划线） */
+  --red: #b5342e;
+  /* 贴纸硬色 */
+  --cyan: #6fd3c1;
+  --pink: #f2a7c3;
+  --yellow: #f6d34e;
+  --blue: #9cb8f0;
+  /* 硬阴影（零高斯模糊） */
+  --shadow: 4px 4px 0 var(--ink);
+  --shadow-lg: 7px 7px 0 var(--ink);
+  /* 字体：Ticket 02 将在此引入 CDN 分片；当前为系统 fallback */
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono",
+    Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --paper: #1a1814;
+  --dot: rgba(240, 232, 214, 0.07);
+  --ink: #efe7d6;
+  --ink-soft: #a89f8a;
+  --card: #2a261e;
+  --red: #b5342e; /* 朱砂保持原值 */
+  --cyan: #7fe0cd;
+  --pink: #f5b7d0;
+  --yellow: #f8db66;
+  --blue: #a8c3f5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.75;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-font-smoothing: antialiased;
+  /* 主题切换回退渐变（无 View Transitions API 的老浏览器） */
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+/* 常见面元素跟随渐变（回退路径） */
+.site-nav a,
+.site-footer,
+.theme-toggle {
+  transition-property:
+    background-color, color, border-color, box-shadow, transform;
+}
+
+/* ── 主题切换过场：View Transitions「翻页」──
+   transform+opacity 均为合成器动画，不逐帧重光栅化（circle clip-path 会卡）；
+   旧页被揭走，新页落上来，呼应稿纸的纸页意象 */
+::view-transition-group(root) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+::view-transition-old(root) {
+  animation: page-out 0.4s cubic-bezier(0.55, 0, 0.55, 0.2) both;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+::view-transition-new(root) {
+  animation: page-in 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  mix-blend-mode: normal;
+  z-index: 2;
+}
+@keyframes page-out {
+  to {
+    transform: translateY(-7%) rotate(-1.2deg) scale(0.97);
+    opacity: 0;
+  }
+}
+@keyframes page-in {
+  from {
+    transform: translateY(5%) rotate(0.8deg) scale(0.99);
+    opacity: 0;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

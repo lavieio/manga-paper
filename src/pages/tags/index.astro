@@ -1,0 +1,98 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getPublishedPosts, toUrlSegment } from "../../utils/posts";
+
+const posts = await getPublishedPosts();
+const counts = new Map<string, number>();
+for (const post of posts) {
+  for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+}
+const tags = [...counts.entries()].sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "zh-Hans-CN"),
+);
+
+/** 字号档位：×1-2 → s1；×3-4 → s2；×5+ → s3 */
+function sizeClass(count: number): string {
+  if (count >= 5) return "s3";
+  if (count >= 3) return "s2";
+  return "s1";
+}
+---
+
+<Base title="标签">
+  <div class="page-head">
+    <h1>标签</h1>
+    <p class="sub">按话题翻翻——字号越大文章越多</p>
+  </div>
+
+  <div class="cloud">
+    {
+      tags.map(([tag, count]) => (
+        <a class={`tag-chip ${sizeClass(count)}`} href={`/tags/${toUrlSegment(tag)}`}>
+          {tag} <span class="n">×{count}</span>
+        </a>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .page-head {
+    margin: 8px 0 8px;
+  }
+  .page-head h1 {
+    font-size: 30px;
+    font-weight: 700;
+  }
+  .page-head .sub {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    margin: 30px 0 8px;
+    padding: 28px 26px;
+    border: 3px solid var(--ink);
+    background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  .tag-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: 3px 3px 0 var(--ink);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  .tag-chip:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .tag-chip .n {
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .tag-chip.s1 {
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+  .tag-chip.s2 {
+    font-size: 15px;
+    padding: 6px 14px;
+  }
+  .tag-chip.s3 {
+    font-size: 18px;
+    padding: 8px 18px;
+    background: var(--yellow);
+  }
+</style>

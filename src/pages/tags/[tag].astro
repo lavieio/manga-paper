@@ -1,0 +1,69 @@
+---
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import { getPublishedPosts, toUrlSegment } from "../../utils/posts";
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: posts.filter((p) => p.data.tags.includes(tag)),
+    },
+  }));
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`# ${tag}`}>
+  <div class="tag-head">
+    <h1># {tag}</h1>
+    <span class="sticker">{posts.length} 篇</span>
+    <a class="back" href="/tags">← 全部标签</a>
+  </div>
+
+  <section class="cards">
+    {posts.map((post) => <PostCard post={post} />)}
+  </section>
+</Base>
+
+<style>
+  .tag-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 8px 0 30px;
+    flex-wrap: wrap;
+  }
+  .tag-head h1 {
+    font-size: 26px;
+    font-weight: 700;
+  }
+  .tag-head .back {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .tag-head .back:hover {
+    color: var(--red);
+  }
+  .sticker {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    background: var(--cyan);
+    color: var(--ink);
+    transform: rotate(-1.2deg);
+  }
+  .cards {
+    display: grid;
+    gap: 26px;
+  }
+</style>

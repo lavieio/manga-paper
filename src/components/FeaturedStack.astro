@@ -1,0 +1,338 @@
+---
+/**
+ * Featured 纸片堆轮播（对齐 demos/05-comic-paper.html 定稿）
+ * - 最多 5 张 featured，自动轮播 + 编号方块 + 双向 hover 联动 + 甩卡动画
+ * - 顶层卡片点击进详情；后层卡片点击将其抽到顶层
+ * - prefers-reduced-motion：不自动播放，切换瞬时
+ */
+import type { DatedPost } from "../utils/posts";
+import { getPostSlug, getCategory } from "../utils/posts";
+import { estimateReadTime } from "../utils/readtime";
+import { formatDate } from "../utils/format";
+
+interface Props {
+  posts: DatedPost[];
+}
+
+const MAX_FEATURED = 5;
+const sheets = Astro.props.posts.slice(0, MAX_FEATURED);
+---
+
+<section class="hero" aria-label="精选文章">
+  <div class="tag-row"><span class="sticker red">{"// 精选 × "}{sheets.length}</span></div>
+  <div class="stack" id="featured-stack">
+    {
+      sheets.map((post, i) => (
+        <article
+          class="sheet"
+          data-index={i}
+          data-href={`/posts/${getPostSlug(post)}`}
+        >
+          <div class="window">
+            <div class="cap">
+              <span class="tl r" />
+              <span class="tl y" />
+              <span class="tl g" />
+              <span class="file">posts/{getPostSlug(post)}.md</span>
+              <span class="desc">
+                {formatDate(post.data.date)} · {getCategory(post)} ·{" "}
+                {estimateReadTime(post.body ?? "")} 分钟
+              </span>
+            </div>
+            <div class="body">
+              <pre class="code"><span class="k">const</span> post = {"{"}
+  title: <span class="s">'{post.data.title}'</span>,
+  category: <span class="s">'{getCategory(post)}'</span>,
+{"}"}
+
+<span class="k">return</span> <span class="s">'{post.data.description}'</span></pre>
+            </div>
+          </div>
+        </article>
+      ))
+    }
+  </div>
+  <div class="dots" role="tablist" aria-label="精选轮播">
+    {
+      sheets.map((post, i) => (
+        <button class="dot" data-index={i} aria-label={`查看精选：${post.data.title}`}>
+          {String(i + 1).padStart(2, "0")}
+        </button>
+      ))
+    }
+  </div>
+</section>
+
+<script>
+  const AUTO_DELAY = 3000;
+
+  const stack = document.querySelector<HTMLElement>("#featured-stack");
+  const sheets = Array.from(stack?.querySelectorAll<HTMLElement>(".sheet") ?? []);
+  const dots = Array.from(
+    document.querySelectorAll<HTMLButtonElement>(".featured-stack .dot, .hero .dot"),
+  );
+  const N = sheets.length;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (N > 1) {
+    let current = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let animating = false;
+
+    const applyPile = (el: HTMLElement, rel: number) => {
+      el.style.zIndex = String(N - rel);
+      el.style.setProperty("--tx", `${-6 * rel}px`);
+      el.style.setProperty("--ty", `${-8 * rel}px`);
+      el.style.setProperty("--rot", `${rel % 2 === 0 ? -1 : 1}deg`);
+    };
+
+    const layout = () => {
+      sheets.forEach((el, i) => {
+        const rel = (i - current + N) % N;
+        el.classList.toggle("front", rel === 0);
+        el.classList.toggle("behind", rel !== 0);
+        applyPile(el, rel);
+      });
+      dots.forEach((d, i) => d.classList.toggle("on", i === current));
+    };
+
+    const goTo = (target: number) => {
+      if (animating || target === current) return;
+      animating = true;
+      const out = sheets[current];
+      const finish = () => {
+        out.classList.remove("toss");
+        out.classList.add("fading");
+        current = target;
+        layout();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            out.classList.remove("fading");
+            animating = false;
+          }),
+        );
+      };
+      if (reduceMotion) {
+        finish();
+      } else {
+        out.classList.add("toss");
+        out.addEventListener("animationend", finish, { once: true });
+      }
+      restart();
+    };
+
+    const restart = () => {
+      clearInterval(timer);
+      if (!reduceMotion) timer = setInterval(() => goTo((current + 1) % N), AUTO_DELAY);
+    };
+
+    sheets.forEach((el, i) => {
+      el.addEventListener("click", () => {
+        if (i === current) {
+          const href = el.dataset.href;
+          if (href) location.href = href;
+        } else {
+          goTo(i);
+        }
+      });
+      el.addEventListener("mouseenter", () => dots[i]?.classList.add("lift-hover"));
+      el.addEventListener("mouseleave", () => dots[i]?.classList.remove("lift-hover"));
+    });
+    dots.forEach((d, i) => {
+      d.addEventListener("click", () => goTo(i));
+      d.addEventListener("mouseenter", () => sheets[i]?.classList.add("lift-hover"));
+      d.addEventListener("mouseleave", () => sheets[i]?.classList.remove("lift-hover"));
+    });
+    stack?.addEventListener("mouseenter", () => clearInterval(timer));
+    stack?.addEventListener("mouseleave", restart);
+
+    layout();
+    restart();
+  }
+</script>
+
+<style>
+  .hero {
+    padding: 48px 0 20px;
+  }
+  .tag-row {
+    display: flex;
+    gap: 12px;
+    /* 预留纸片上探空间：悬停上浮最多约 -24px，防止遮挡标签 */
+    margin-bottom: 34px;
+  }
+
+  .stack {
+    display: grid;
+  }
+  .sheet {
+    grid-area: 1 / 1;
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) rotate(var(--rot, 0deg));
+    transition:
+      transform 0.55s cubic-bezier(0.2, 0.7, 0.25, 1),
+      opacity 0.4s ease;
+    will-change: transform;
+  }
+  .sheet.behind {
+    cursor: pointer;
+  }
+  .sheet.behind:hover,
+  .sheet.lift-hover {
+    transform: translate(calc(var(--tx, 0px) - 8px), calc(var(--ty, 0px) - 16px))
+      rotate(var(--rot, 0deg));
+  }
+  .sheet.behind:hover .window,
+  .sheet.lift-hover .window {
+    box-shadow: var(--shadow-lg);
+  }
+  .sheet.front {
+    cursor: pointer;
+  }
+  .sheet.front:hover {
+    transform: translate(-4px, -10px) rotate(0deg);
+  }
+
+  /* 抽走动画：像从纸堆上拈起这张甩到一边 */
+  @keyframes toss {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(64%, -3%) rotate(12deg);
+      opacity: 0;
+    }
+  }
+  .sheet.toss {
+    animation: toss 0.45s ease-in forwards;
+    pointer-events: none;
+  }
+  .sheet.fading {
+    opacity: 0;
+  }
+
+  .window {
+    border: 3px solid var(--ink);
+    background: var(--card);
+    box-shadow: var(--shadow-lg);
+  }
+  .window .cap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 3px solid var(--ink);
+    background: var(--paper);
+  }
+  .window .cap .tl {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+  }
+  .tl.r { background: var(--red); }
+  .tl.y { background: var(--yellow); }
+  .tl.g { background: var(--cyan); }
+  .window .cap .file {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-left: 6px;
+  }
+  .window .cap .desc {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .window .body {
+    padding: 26px 26px 28px;
+  }
+  .code {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .k { font-weight: 700; }
+  .s { background: rgba(246, 211, 78, 0.45); padding: 0 2px; }
+  :global(html[data-theme="dark"]) .s {
+    background: rgba(246, 211, 78, 0.25);
+  }
+
+  .dots {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 22px;
+  }
+  .dot {
+    width: 34px;
+    height: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .dot:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .dot:active {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .dot.on {
+    background: var(--red);
+    color: var(--card);
+    transform: rotate(-2deg);
+  }
+  .dot.lift-hover {
+    transform: translate(-2px, -2px) rotate(-2deg);
+    box-shadow: 5px 5px 0 var(--ink);
+    background: var(--pink);
+  }
+
+  .sticker {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border: 2px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    color: var(--ink);
+  }
+  .sticker.red {
+    background: var(--red);
+    color: var(--card);
+    transform: rotate(-1.2deg);
+  }
+
+  @media (max-width: 640px) {
+    .window .body {
+      padding: 18px 16px 20px;
+    }
+    .code {
+      font-size: 13px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet {
+      transition: none;
+    }
+    .sheet.toss {
+      animation: none;
+      opacity: 0;
+    }
+  }
+</style>

@@ -18,7 +18,7 @@ const href = `/posts/${getPostSlug(post)}`;
 <a class="card" href={href}>
   <div class="top">
     <span class={`sticker ${categoryColor(category)}`}>{category}</span>
-    {post.data.featured && <span class="sticker red">FEATURED</span>}
+    {post.data.featured && <span class="sticker red">精选</span>}
   </div>
   <h2>{post.data.title}</h2>
   <p class="excerpt">{post.data.description}</p>

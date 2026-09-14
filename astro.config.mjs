@@ -5,4 +5,9 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   output: "static",
   site: process.env.SITE_URL ?? "https://your-domain.com",
+  markdown: {
+    shikiConfig: {
+      themes: { light: "github-light", dark: "github-dark-dimmed" },
+    },
+  },
 });

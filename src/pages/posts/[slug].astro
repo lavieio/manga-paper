@@ -1,0 +1,96 @@
+---
+import "../../styles/prose.css";
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
+import {
+  getPublishedPosts,
+  getPostSlug,
+  getCategory,
+  toUrlSegment,
+} from "../../utils/posts";
+import { categoryColor } from "../../utils/category";
+import { estimateReadTime } from "../../utils/readtime";
+import { formatDate } from "../../utils/format";
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return posts.map((post, i) => ({
+    params: { slug: getPostSlug(post) },
+    props: {
+      post,
+      prev: posts[i + 1] ?? null, // 上一篇（更早）
+      next: posts[i - 1] ?? null, // 下一篇（更新）
+    },
+  }));
+}
+
+const { post, prev, next } = Astro.props;
+const { Content, headings } = await render(post);
+const category = getCategory(post);
+const minutes = estimateReadTime(post.body ?? "");
+---
+
+<Base title={post.data.title} description={post.data.description}>
+  <div class="post-head">
+    <div class="stickers">
+      <a class={`sticker ${categoryColor(category)}`} href={`/category/${toUrlSegment(category)}`}>
+        {category}
+      </a>
+      {
+        post.data.tags.map((tag: string) => (
+          <a class="sticker blue" href={`/tags/${toUrlSegment(tag)}`}>
+            {tag}
+          </a>
+        ))
+      }
+    </div>
+    <h1 class="post-title">{post.data.title}</h1>
+    <div class="post-meta">
+      <span>发布 <b>{formatDate(post.data.date)}</b></span>
+      {post.data.updated && <span>更新 <b>{formatDate(post.data.updated)}</b></span>}
+      <span>约 <b>{minutes} 分钟</b></span>
+    </div>
+  </div>
+
+  <article class="prose">
+    <Content />
+  </article>
+
+  <nav class="post-nav">
+    {
+      prev ? (
+        <a class="nav-card" href={`/posts/${getPostSlug(prev)}`}>
+          <div class="lbl">← 上一篇</div>
+          <b>{prev.data.title}</b>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      next && (
+        <a class="nav-card next" href={`/posts/${getPostSlug(next)}`}>
+          <div class="lbl">下一篇 →</div>
+          <b>{next.data.title}</b>
+        </a>
+      )
+    }
+  </nav>
+
+  <div class="comment-box">评论区将在后续版本接入 remark42</div>
+
+  {/* TOC 悬浮于容器右缘外侧（≥1400px 才显示），不占正文栏位 */}
+  <TableOfContents headings={headings} />
+</Base>
+
+<style>
+  .stickers a.sticker {
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  .stickers a.sticker:hover {
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+</style>

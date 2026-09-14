@@ -1,0 +1,104 @@
+---
+/**
+ * 右侧 sticky TOC（plan §7.2，对齐 demos/comic/post.html）
+ * - 嵌套 h2/h3/h4，按 data-depth 缩进，全部展开
+ * - 活动链（当前 + 全部父级）朱砂高亮；每条左侧 3px 朱砂竖条 scaleY 激活
+ * - IntersectionObserver 顶部触发；<1080px 收进右下「目录」弹层
+ */
+
+export interface TocHeading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: TocHeading[];
+}
+
+const items = Astro.props.headings.filter((h) => h.depth >= 2 && h.depth <= 4);
+---
+
+{
+  items.length > 0 && (
+    <>
+      <aside class="post-toc">
+        <div class="toc-box">
+          <div class="toc-cap">目录 / CONTENTS</div>
+          <ul class="toc-list" data-toc>
+            {items.map((h) => (
+              <li>
+                <a href={`#${h.slug}`} data-depth={h.depth} data-slug={h.slug}>
+                  {h.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+
+      <button class="toc-fab" type="button" aria-expanded="false" aria-controls="toc-popover">
+        目录
+      </button>
+      <div class="toc-popover toc-box" id="toc-popover">
+        <div class="toc-cap">目录 / CONTENTS</div>
+        <ul class="toc-list" data-toc-popover>
+          {items.map((h) => (
+            <li>
+              <a href={`#${h.slug}`} data-depth={h.depth} data-slug={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  )
+}
+
+<script>
+  const links = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>("[data-toc] a, [data-toc-popover] a"),
+  );
+  if (links.length > 0) {
+    // slug → 各级链接（桌面列表 + 弹层各一份）
+    const bySlug = new Map<string, HTMLAnchorElement[]>();
+    for (const a of links) {
+      const slug = a.dataset.slug!;
+      bySlug.set(slug, [...(bySlug.get(slug) ?? []), a]);
+    }
+
+    const activate = (slug: string) => {
+      // 仅当前小节高亮（父级保持淡墨，焦点唯一）
+      links.forEach((a) => a.classList.toggle("on", a.dataset.slug === slug));
+    };
+
+    const headings = [...bySlug.keys()]
+      .map((slug) => document.getElementById(slug))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const en of entries) {
+          if (en.isIntersecting) activate(en.target.id);
+        }
+      },
+      { rootMargin: "0px 0px -70% 0px", threshold: 0 },
+    );
+    headings.forEach((h) => io.observe(h));
+
+    // 窄屏弹层开合
+    const fab = document.querySelector<HTMLButtonElement>(".toc-fab");
+    const popover = document.querySelector<HTMLElement>(".toc-popover");
+    fab?.addEventListener("click", () => {
+      const open = popover?.classList.toggle("open");
+      fab.setAttribute("aria-expanded", String(!!open));
+    });
+    popover?.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a")) {
+        popover.classList.remove("open");
+        fab?.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+</script>

@@ -7,12 +7,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test scripts/*.test.ts",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=22 <25"
   },
   "dependencies": {
     "astro": "^7.3.2"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

@@ -62,10 +62,15 @@ function assertUniqueSlugs(posts: BlogPost[]): void {
   }
 }
 
-function assertDated(post: BlogPost): asserts post is DatedPost {
-  if (!post.data.date) {
-    throw new Error(`[content] 发布文章 "${post.id}" 缺少 date（draft 可省略；请提交让钩子注入）`);
-  }
+/**
+ * 非草稿文章缺 date 时的构建期兜底：用构建时刻日期填充并发出警告。
+ * 正常流程下 date 由钩子注入，只会出现在「写完还没提交」的预览期；
+ * 提交后 frontmatter 已有真实日期，警告不会再出现。
+ */
+function fillMissingDate(post: BlogPost): DatedPost {
+  if (post.data.date) return post as DatedPost;
+  console.warn(`[content] "${post.id}" 缺少 date，构建期用当前日期兜底（提交后由钩子注入）`);
+  return { ...post, data: { ...post.data, date: new Date() } };
 }
 
 /** 首次构建时打印 distinct category 清单，笔误一眼可见 */
@@ -84,8 +89,7 @@ export async function getPublishedPosts(): Promise<DatedPost[]> {
   const all = await getCollection("blog");
   all.forEach(assertValidPost);
   assertUniqueSlugs(all);
-  const published = all.filter((p) => !p.data.draft);
-  published.forEach(assertDated);
+  const published = all.filter((p) => !p.data.draft).map(fillMissingDate);
   printDistinctCategories(published);
   return published.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 }

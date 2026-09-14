@@ -8,11 +8,11 @@ interface Props {
 const { current = "" } = Astro.props;
 
 const NAV_ITEMS = [
-  { href: "/posts/", label: "文章" },
-  { href: "/archive", label: "归档" },
-  { href: "/tags", label: "标签" },
-  { href: "/search", label: "搜索" },
-  { href: "/about", label: "关于" },
+  { href: "/posts/1", match: "/posts", label: "文章" },
+  { href: "/archive", match: "/archive", label: "归档" },
+  { href: "/tags", match: "/tags", label: "标签" },
+  { href: "/search", match: "/search", label: "搜索" },
+  { href: "/about", match: "/about", label: "关于" },
 ] as const;
 ---
 
@@ -26,8 +26,8 @@ const NAV_ITEMS = [
       NAV_ITEMS.map((item) => (
         <a
           href={item.href}
-          class={current.startsWith(item.href.replace(/\/$/, "")) ? "on" : ""}
-          aria-current={current.startsWith(item.href.replace(/\/$/, "")) ? "page" : undefined}
+          class={current.startsWith(item.match) ? "on" : ""}
+          aria-current={current.startsWith(item.match) ? "page" : undefined}
         >
           {item.label}
         </a>

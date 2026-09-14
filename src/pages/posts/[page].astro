@@ -1,0 +1,88 @@
+---
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
+import Pagination from "../../components/Pagination.astro";
+import { getPublishedPosts, getCategory, toUrlSegment } from "../../utils/posts";
+import type { GetStaticPathsOptions } from "astro";
+
+export const PAGE_SIZE = 8;
+
+export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
+  const posts = await getPublishedPosts();
+  const categories = [...new Set(posts.map(getCategory))].sort();
+  return paginate(posts, { pageSize: PAGE_SIZE, props: { categories } });
+}
+
+const { page, categories } = Astro.props;
+const total = page.total;
+---
+
+<Base title="全部文章">
+  <div class="page-head">
+    <h1>全部文章</h1>
+    <span class="count">共 {total} 篇 · 第 {page.currentPage} / {page.lastPage} 页</span>
+  </div>
+
+  <div class="filters">
+    <span class="filter on">全部</span>
+    {
+      categories.map((c) => (
+        <a class="filter" href={`/category/${toUrlSegment(c)}`}>
+          {c}
+        </a>
+      ))
+    }
+  </div>
+
+  <section class="cards">
+    {page.data.map((post) => <PostCard post={post} />)}
+  </section>
+
+  <Pagination currentPage={page.currentPage} lastPage={page.lastPage} />
+</Base>
+
+<style>
+  .page-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin: 8px 0 4px;
+  }
+  .page-head h1 {
+    font-size: 30px;
+    font-weight: 700;
+  }
+  .page-head .count {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 28px 0 36px;
+  }
+  .filter {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 2px solid var(--ink);
+    background: var(--card);
+    box-shadow: 3px 3px 0 var(--ink);
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  a.filter:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .filter.on {
+    background: var(--ink);
+    color: var(--card);
+  }
+  .cards {
+    display: grid;
+    gap: 26px;
+  }
+</style>
